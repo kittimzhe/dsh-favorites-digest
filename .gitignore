@@ -9,3 +9,5 @@ output/*.json
 output/*.md
 !output/.gitkeep
 .DS_Store
+
+*.egg-info/
