@@ -1,0 +1,87 @@
+# 收藏摘要工具
+
+把你**自己账号**在抖音、小红书 web 端的收藏，导出成一份 Markdown 文档（含主题分组）。工具用本机浏览器会话工作，不保存你的密码，也不去猜平台签名接口。
+
+请只用于导出自己的收藏。平台页面改版后选择器可能失效，需要再适配。
+
+## 两种登录方式
+
+### 方式 A：工具自己的浏览器（推荐，第一次扫码即可）
+
+工具会打开 Chromium/Chrome，登录状态保存在 `data/profile/`。之后只要不删这个目录，就会保持登录。
+
+```bash
+cd favorites-digest
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+python -m playwright install chromium
+```
+
+```bash
+python -m favorites_digest login
+# 在弹出的窗口里分别登录小红书和抖音，按终端提示回车
+
+python -m favorites_digest run
+```
+
+生成文件在 `output/`：
+
+- `favorites-YYYYMMDD-HHMM.json` 原始条目
+- `favorites-YYYYMMDD-HHMM.md` 可读摘要
+
+### 方式 B：复用你已经登录的 Chrome
+
+如果你平时就在 Chrome 里保持登录，先退出占用调试端口的 Chrome，再启动：
+
+```bash
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+```
+
+然后：
+
+```bash
+python -m favorites_digest run --cdp-url http://127.0.0.1:9222
+```
+
+这时不会另开无登录的浏览器，而是挂到你当前的 Chrome。
+
+## 常用命令
+
+| 命令 | 作用 |
+| --- | --- |
+| `python -m favorites_digest login` | 打开站点并等待你扫码 |
+| `python -m favorites_digest collect` | 只抓取，写出 JSON |
+| `python -m favorites_digest digest` | 把最近一次 JSON 写成 Markdown |
+| `python -m favorites_digest run` | 抓取 + 写文档 |
+| `--platform xiaohongshu` / `--platform douyin` | 只跑一个平台 |
+| `--limit 50` | 每个平台最多 50 条（调试用） |
+| `--likes` | 抖音同时导出「喜欢」 |
+| `--no-llm` | 不要调用大模型 |
+
+## 可选：AI 综述
+
+复制 `.env.example` 为 `.env`，填入兼容 OpenAI 的接口。不配置也能用：文档里仍有关键词主题分组和完整清单。
+
+```
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4o-mini
+```
+
+## 它怎么读收藏
+
+1. 打开「我」相关页面：  
+   - 小红书：个人主页 → 收藏 → 笔记  
+   - 抖音：`https://www.douyin.com/user/self?showTab=favorite_collection`
+2. 监听页面自己发出的列表接口，同时从卡片 DOM 补齐链接。
+3. 自动滚动加载，直到数量不再增加。
+
+如果终端提示还没登录，先跑 `login`，或改用 `--cdp-url` 挂已登录的 Chrome。遇到验证码时在窗口里手动过完再继续。
+
+## 开发
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
