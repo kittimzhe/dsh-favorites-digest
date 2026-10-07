@@ -1,0 +1,5 @@
+# The dsh-favorites-digest bundle patch: mounts the /favorites command.
+# Applied as one insert; requires the `commands` service from dsh-base / web.
+- insert:
+    - id: favorites-digest
+      name: 'dsh-favorites-digest'

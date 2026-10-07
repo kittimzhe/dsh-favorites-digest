@@ -1,0 +1,2 @@
+[console_scripts]
+favorites-digest = favorites_digest.cli:main
